@@ -321,6 +321,8 @@
     }
     if (role === 'admin') memberships = memberships.filter(member => member.role === 'owner' || member.role === 'dispatcher');
     else memberships = memberships.filter(member => member.role === 'driver');
+    const createDriverButton = document.getElementById('seeDrivers');
+    if (createDriverButton) createDriverButton.hidden = role !== 'admin' || !memberships.some(member => member.role === 'owner');
     showAuthenticatedArea(role);
     setAuthFeedback('Acesso autorizado.', 'success');
     await refreshRides();
@@ -464,16 +466,28 @@
       return { driverId: data };
     },
     async createUser({ name, phone, password, role, vehicle }) {
-      if (!client || !currentUser || activeRole !== 'admin') throw new Error('Somente a administração autenticada pode cadastrar usuários.');
-      const membership = memberships.find(item => item.role === 'owner' || item.role === 'dispatcher');
-      if (!membership) throw new Error('A conta atual não administra esta operação.');
-      const { data, error } = await client.functions.invoke('vertice-create-user', {
-        body: { organizationId: membership.organization_id, name, phone, password, role, vehicle: vehicle || null }
+      if (!client || !currentUser || activeRole !== 'admin') throw new Error('Entre com uma conta administrativa antes de cadastrar um motorista.');
+      if (role !== 'driver') throw new Error('Este formulário cadastra somente motoristas.');
+      const membership = memberships.find(item => item.role === 'owner');
+      if (!membership) throw new Error('Somente o responsável da operação pode cadastrar motoristas.');
+      const { data, error } = await client.functions.invoke('admin-create-user', {
+        body: { full_name: name, phone, password, vehicle_description: vehicle || null }
       });
-      if (error) throw new Error(data?.error || error.message || 'Falha ao criar acesso.');
-      if (data?.error) throw new Error(data.error);
-      if (role === 'driver') await refreshDrivers();
-      return { created: true, userId: data.userId, role: data.role };
+      const errorCode = data?.error;
+      const messages = {
+        unauthorized: 'Sua sessão expirou. Entre novamente.',
+        forbidden: 'Somente o responsável da operação pode cadastrar motoristas.',
+        invalid_phone: 'Informe um celular válido com DDD.',
+        weak_password: 'A senha inicial precisa ter pelo menos 8 caracteres.',
+        name_required: 'Informe o nome completo do motorista.',
+        phone_already_registered: 'Este celular já está cadastrado.',
+        create_user_failed: 'O Supabase não conseguiu criar a conta.',
+        member_link_failed: 'A conta foi criada, mas o vínculo com a operação falhou. Avise o suporte antes de tentar novamente.',
+        driver_profile_failed: 'A conta foi criada, mas o perfil do motorista falhou. Avise o suporte antes de tentar novamente.'
+      };
+      if (error || errorCode) throw new Error(messages[errorCode] || errorCode || error.message || 'Não foi possível criar o acesso.');
+      await refreshDrivers();
+      return { created: true, userId: data.user_id, role: data.role };
     },
     async assignRide({ rideId, driverId, organizationId }) {
       if (!client || !currentUser || activeRole !== 'admin') throw new Error('Entre com uma conta administrativa antes de designar uma corrida.');
