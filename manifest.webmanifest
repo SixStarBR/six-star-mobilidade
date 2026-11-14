@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "Six Star Mobilidade — Vértice",
+  "short_name": "Six Star",
+  "description": "Agenda e operação de transporte executivo para motoristas e administração da Six Star Mobilidade.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#101112",
+  "theme_color": "#101112",
+  "categories": ["business", "travel"],
+  "icons": [
+    {
+      "src": "./icons/vertice-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
