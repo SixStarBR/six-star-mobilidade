@@ -470,7 +470,7 @@
       if (role !== 'driver') throw new Error('Este formulário cadastra somente motoristas.');
       const membership = memberships.find(item => item.role === 'owner');
       if (!membership) throw new Error('Somente o responsável da operação pode cadastrar motoristas.');
-      const { data, error } = await client.functions.invoke('vertice-create-user', {
+      const { data, error } = await client.functions.invoke('admin-create-user', {
         body: { full_name: name, phone, password, vehicle_description: vehicle || null }
       });
       const errorCode = data?.error;
